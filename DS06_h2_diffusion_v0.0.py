@@ -53,11 +53,15 @@ train_target_h2,train_features_h2 = sort_low_to_high(train_target_h2,train_featu
 test_target_h2,test_target_h2 = sort_low_to_high(test_target_h2,test_target_h2)
 
 # Model training and testing
-def H2_diffuse_model(criterion,estimators):
-    criterion = criterion
-    estimators = estimators
-    h2_model = ExtraTreesRegressor(max_features=0.55,min_samples_leaf=2,
-    min_samples_split=5,criterion=criterion,n_estimators=estimators)
+def H2_diffuse_model(criterion,estimators,maxfeatures,minsamplesleaf,minsamplessplit):
+    c = criterion
+    e = estimators
+    mf = maxfeatures
+    msl = minsamplesleaf
+    mss = minsamplessplit
+    h2_model = ExtraTreesRegressor(bootstrap=False,max_features=mf,min_samples_leaf=msl,
+    min_samples_split=mss,criterion=c,n_estimators=e,
+    random_state=42)
 
     h2_model.fit(train_features_h2,train_target_h2)
     predicted_targets = h2_model.predict(test_features_h2)
@@ -71,22 +75,36 @@ def H2_diffuse_model(criterion,estimators):
 
     return srcc,mae,rmse,r2
 
-criterion = ['squared_error','absolute_error','friedman_mse','poisson']
-estimators = np.arange(50,250,10,dtype='int32')
+parameters = {
+    'criterion':['squared_error','absolute_error','friedman_mse','poisson'],
+    'estimators':np.arange(50,250,10),
+    'maxfeatures':['sqrt','log2',*np.arange(0.1,1,0.05)],
+    'minsamplesleaf':np.arange(1,10,1),
+    'minsamplessplit':np.arange(2,50,1)
+}
 
 srccs=[]
 rmses=[]
 maes=[]
 r2s=[]
-params = {}
-for c in criterion:
-    for x in estimators:
-        srcc,mae,rmse,r2 = H2_diffuse_model(criterion = c, estimators = x)
-        srccs.append(srcc)
-        rmses.append(rmse)
-        maes.append(mae)
-        r2s.append(r2)
-        params.update({c:x})
+params = []
+for c in parameters['criterion']:
+    for e in parameters['estimators']:
+        for mf in parameters['maxfeatures']:
+            for msl in parameters['minsamplesleaf']:
+                for mss in parameters['minsamplessplit']:
+                    srcc,mae,rmse,r2,y = H2_diffuse_model(
+                        criterion = c,
+                        estimators = e,
+                        maxfeatures = mf,
+                        minsamplesleaf = msl,
+                        minsamplessplit = mss
+                    )
+                    srccs.append(srcc)
+                    rmses.append(rmse)
+                    maes.append(mae)
+                    r2s.append(r2)
+                    params.append([c,e,mf,msl,mss])
 
 idx_min = rmses.index(min(rmses))
 # dictionaries are cancer to deal with.

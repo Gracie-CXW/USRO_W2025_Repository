@@ -2,7 +2,7 @@
 # This model predicts CH4 diffusion, it uses R2, MAE,SRCC, and RMSE as evaluators. 
 # All molecular descriptors are used in the training 
 # The paper itself did not specify whether or not features were preprocessed,
-# I will use Standard Scaler as I always do. 
+# I used Standard Scaler.
 
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import train_test_split
